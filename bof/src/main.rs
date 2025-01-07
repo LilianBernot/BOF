@@ -1,6 +1,9 @@
 use std::env;
+use std::path::PathBuf;
 use std::process;
 use std::fs;
+use sha1::{Sha1, Digest};
+
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -13,6 +16,7 @@ fn main() {
     match args[1].as_str() {
         "init" => init_command(),
         "showdir" => showdir_command("./", 0),
+        "index" => index_command(),
         _ => {
             eprintln!("Unknown command: {}", args[1]);
             process::exit(1);
@@ -76,4 +80,26 @@ fn showdir_command(current_path:&str, depth: usize) {
             }
         }
     }
+}
+
+
+fn index_command() {
+    println!("Indexing the folder");
+
+    let file_path = "./Cargo.toml";
+
+    let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
+
+    // create a Sha1 object
+    let mut hasher = Sha1::new();
+
+    hasher.update(contents);
+
+    let hash_index = format!("{:x}", hasher.finalize());
+
+    let (first_two, rest) = hash_index.split_at(2);
+
+    println!("Hash index : {}", hash_index);
+    println!("first two : {}", first_two);
+    println!("rest : {}", rest)
 }
