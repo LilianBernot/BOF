@@ -109,5 +109,19 @@ fn index_command() {
 
     println!("Hash index : {}", hash_index);
     println!("first two : {}", first_two);
-    println!("rest : {}", rest)
+    println!("rest : {}", rest);
+
+    // create path for indexing
+
+    let bof_dir = get_bof_dir();
+
+    let index_dir = bof_dir.join(first_two);
+
+    if index_dir.exists() {
+        println!("Index directory already exists.");
+    } else {
+        fs::create_dir(&index_dir).expect("Failed to create index directory");
+        println!("Initialized empty index directory in {:?}", index_dir);
+    }
+
 }
