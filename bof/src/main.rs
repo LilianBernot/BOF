@@ -24,9 +24,17 @@ fn main() {
     }
 }
 
-fn init_command() {
+/// Get bof dir from current path
+fn get_bof_dir() -> PathBuf{
     let current_dir = env::current_dir().expect("Failed to get current directory");
     let bof_dir = current_dir.join(".bof");
+
+    bof_dir
+}
+
+fn init_command() {
+
+    let bof_dir = get_bof_dir();
 
     if bof_dir.exists() {
         println!("The .bof directory already exists.");
