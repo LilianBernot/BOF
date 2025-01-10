@@ -139,8 +139,6 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
 
         let path_name = unwrapped_path.display().to_string();
 
-
-
         if unwrapped_path.is_file() {
             let file_hash = hash_file(&path_name);
             entries.push((path_name, file_hash, "FILE"));
@@ -156,7 +154,7 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
     let mut data_to_write = String::new();
 
     for (name, hash, kind) in entries {
-        data_to_write.push_str("NAME : ");
+        data_to_write.push_str("\nNAME : ");
         data_to_write.push_str(&name);
         hasher.update(name);
         data_to_write.push_str("\nKIND : ");
@@ -175,7 +173,7 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
 /// # Returns
 /// 
 /// * data to write to the index file
-fn get_index_file_data(metadata:Metadata) -> String {
+fn get_index_data_for_file(metadata:Metadata) -> String {
     let mut data_to_write: String = String::from("\n");
 
     if metadata.is_file() {
@@ -215,7 +213,12 @@ fn create_index_file(hash_index: String, metadata: Metadata) -> File {
 
     let index_file_path = index_directory.join(index_file_name);
 
-    let mut index_file = File::create(index_file_path).unwrap();
+    let mut index_file: File;
+    if index_file_path.exists() {
+        index_file = File::open(index_file_path).unwrap();
+    } else {
+        index_file = File::create(index_file_path).unwrap();
+    }
 
     // Write index file
     write!(index_file, "HASH : ").unwrap();
@@ -237,7 +240,7 @@ fn index_command(current_path:&str) {
     let data_to_write:String;
     if metadata.is_file() {
         hash_index = hash_file(&current_path);
-        data_to_write = get_index_file_data(metadata.clone());
+        data_to_write = get_index_data_for_file(metadata.clone());
     } else if metadata.is_dir() {
         // Calling the function for each element under this folder
         let folder_path_dir = fs::read_dir(current_path).unwrap();
