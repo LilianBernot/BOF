@@ -9,3 +9,6 @@ MVP :
 MVP+ :
 - create an inverted table that maintains, for each file, the list of all the folders where we can find it
 - create the idea of "META BOF" that would maintain a global index of multiple BOFs
+
+Project improvements : 
+- do only one recursive pass on the files : when computing the hashes of a folder, directly create the files of the met files and folders

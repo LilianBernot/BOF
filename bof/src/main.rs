@@ -154,8 +154,7 @@ fn hash_folder(folder_path: &str) -> String  {
 
 
 fn create_index_file(hash_index: String, metadata: Metadata) {
-    // create path for indexing
-
+    // Create index directory
     let bof_directory = get_bof_dir();
 
     let (first_two, rest) = hash_index.split_at(2);
@@ -164,15 +163,20 @@ fn create_index_file(hash_index: String, metadata: Metadata) {
 
     create_index_directory(&index_directory);
 
+    // Create index file
     let index_file_name = format!("{}.txt", rest);
 
     let index_file_path = index_directory.join(index_file_name);
 
     let mut index_file = File::create(index_file_path).unwrap();
 
-    writeln!(index_file, "test").unwrap();
+    // Write index file
+    write!(index_file, "HASH : ").unwrap();
+    writeln!(index_file, "{}", hash_index).unwrap();
 
-    writeln!(index_file, "Second line").unwrap();
+    let inode = metadata.ino();
+    write!(index_file, "INODE : ").unwrap();
+    writeln!(index_file, "{}", inode).unwrap();
 }
 
 fn index_command() {
