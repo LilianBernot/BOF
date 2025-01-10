@@ -105,21 +105,25 @@ fn create_index_directory(index_directory: PathBuf) {
     }
 }
 
-
-fn index_command() {
-    println!("Indexing the folder");
-
-    let file_path = "./Cargo.toml";
-
-    // TODO : create fn o compute hash (here won't work with directories)
-    let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
+/// This function hashes a file content and returns the hash
+fn hash_file(file_path : &str) -> String {
+    let contents = fs::read_to_string(file_path).expect("Could not read the file.");
 
     // create a Sha1 object
     let mut hasher = Sha1::new();
 
     hasher.update(contents);
 
-    let hash_index = format!("{:x}", hasher.finalize());
+    format!("{:x}", hasher.finalize())
+}
+
+
+fn index_command() {
+    println!("Indexing the folder");
+
+    let file_path = "./Cargo.toml";
+
+    let hash_index = hash_file(&file_path);
 
     let (first_two, rest) = hash_index.split_at(2);
 
