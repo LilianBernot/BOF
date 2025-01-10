@@ -111,6 +111,7 @@ fn index_command() {
 
     let file_path = "./Cargo.toml";
 
+    // TODO : create fn o compute hash (here won't work with directories)
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
 
     // create a Sha1 object
@@ -159,7 +160,33 @@ fn index_command() {
     } else if metadata.is_dir() {
         // Add information of the contained documents in the file
 
-        println!("Addin,g indormation of the contained documents")
+        println!("Adding indormation of the contained documents");
+
+        let file_path_dir = fs::read_dir(file_path).unwrap();
+
+        for path in file_path_dir {
+            let unwrapped_path = path.unwrap().path();
+
+            let path_name = unwrapped_path.display().to_string();
+
+            println!("  NAME : {}", path_name);        
+
+            if unwrapped_path.is_dir() {
+                println!("  KIND : DIR");  
+            } else if unwrapped_path.is_file() {
+                println!("  KIND : FILE");  
+            }
+
+            let contents = fs::read_to_string(unwrapped_path).expect("Should have been able to read the file");
+
+            let mut hasher = Sha1::new();
+
+            hasher.update(contents);
+
+            let hash_index = format!("{:x}", hasher.finalize());
+
+            println!("  HAS : {}", hash_index);
+        }
 
     }
 
