@@ -2,6 +2,7 @@ extern crate chrono;
 
 use std::env;
 use std::fs::Metadata;
+use std::os::unix::fs::FileExt;
 use std::path::PathBuf;
 use std::process;
 use std::fs;
@@ -156,9 +157,9 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
         data_to_write.push_str("NAME : ");
         data_to_write.push_str(&name);
         hasher.update(name);
-        data_to_write.push_str("KIND : ");
+        data_to_write.push_str("\nKIND : ");
         data_to_write.push_str(kind);
-        data_to_write.push_str("HASH : ");
+        data_to_write.push_str("\nHASH : ");
         data_to_write.push_str(&hash);
         data_to_write.push_str("\n");
         hasher.update(hash);
@@ -167,8 +168,37 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
     (format!("{:x}", hasher.finalize()), data_to_write)
 }
 
+/// Concatenates the data to write in the index file when path is a file
+/// 
+/// # Returns
+/// 
+/// * data to write to the index file
+fn get_index_file_data(metadata:Metadata) -> String {
+    let mut data_to_write: String = String::from("\n");
 
-fn create_index_file(hash_index: String, metadata: Metadata) {
+    if metadata.is_file() {
+        // Creation time
+        let creation_datetime: DateTime<Utc> =  metadata.created().unwrap().into();
+        let createion_time = format!("{}", creation_datetime.format("%d/%m/%Y %T"));
+        data_to_write.push_str("CREATION TIME : ");
+        data_to_write.push_str(&createion_time);
+
+        // Modification time
+        let modification_datetime: DateTime<Utc> = metadata.modified().unwrap().into();
+        let modification_time = format!("{}", modification_datetime.format("%d/%m/%Y %T"));
+        data_to_write.push_str("\nLAST MODIFICATION TIME : ");
+        data_to_write.push_str(&modification_time);
+
+        // Size
+        let size: String = metadata.size().to_string();
+        data_to_write.push_str("\nSIZE IN BYTES : ");
+        data_to_write.push_str(&size);
+        data_to_write.push_str("\n");
+    }
+    return data_to_write
+}
+
+fn create_index_file(hash_index: String, metadata: Metadata) -> File {
     // Create index directory
     let bof_directory = get_bof_dir();
 
@@ -193,89 +223,29 @@ fn create_index_file(hash_index: String, metadata: Metadata) {
     write!(index_file, "INODE : ").unwrap();
     writeln!(index_file, "{}", inode).unwrap();
 
-    if metadata.is_file() {
-        // Creation time
-        let creation_system_time = metadata.created().unwrap();
-        let creation_datetime: DateTime<Utc> = creation_system_time.into();
-        write!(index_file, "CREATION TIME : ").unwrap();
-        writeln!(index_file, "{}", creation_datetime.format("%d/%m/%Y %T")).unwrap();
-
-        // Modification time
-        let modification_system_time = metadata.modified().unwrap();
-        let modification_datetime: DateTime<Utc> = modification_system_time.into();
-        write!(index_file, "LAST MODIFICATION TIME : ").unwrap();
-        writeln!(index_file, "{}", modification_datetime.format("%d/%m/%Y %T")).unwrap();
-
-        // Size
-        let size = metadata.size();
-        write!(index_file, "SIZE IN BYTES : ").unwrap();
-        writeln!(index_file, "{}", size).unwrap();
-    }
+    return index_file
 }
 
 fn index_command() {
     println!("Indexing the folder");
 
-    let file_path = "./Cargo.toml";
-
-    let hash_index = hash_file(&file_path);
+    let file_path = "./src";
 
     let metadata = fs::metadata(file_path).unwrap();
 
-    create_index_file(hash_index, metadata.clone());
-
-    let inode = metadata.ino();
-
-    println!("inode : {}", inode);
-
+    let hash_index:String;
+    let data_to_write:String;
     if metadata.is_file() {
-        // Get dates
-
-        let modification_system_time = metadata.modified().unwrap();
-
-        let modification_datetime: DateTime<Utc> = modification_system_time.into();
-        println!("Last modification date : {}", modification_datetime.format("%d/%m/%Y %T"));
-
-        let creation_system_time = metadata.created().unwrap();
-
-        let creation_datetime: DateTime<Utc> = creation_system_time.into();
-        println!("Last modification date : {}", creation_datetime.format("%d/%m/%Y %T"));
-
-        let size = metadata.size();
-
-        println!("Document size in bytes: {}", size)
+        hash_index = hash_file(&file_path);
+        data_to_write = get_index_file_data(metadata.clone());
     } else if metadata.is_dir() {
-        // Add information of the contained documents in the file
-
-        println!("Adding indormation of the contained documents");
-
-        let file_path_dir = fs::read_dir(file_path).unwrap();
-
-        for path in file_path_dir {
-            let unwrapped_path = path.unwrap().path();
-
-            let path_name = unwrapped_path.display().to_string();
-
-            println!("  NAME : {}", path_name);        
-
-            if unwrapped_path.is_dir() {
-                println!("  KIND : DIR");  
-            } else if unwrapped_path.is_file() {
-                println!("  KIND : FILE");  
-            }
-
-            let contents = fs::read_to_string(unwrapped_path).expect("Should have been able to read the file");
-
-            let mut hasher = Sha1::new();
-
-            hasher.update(contents);
-
-            let hash_index = format!("{:x}", hasher.finalize());
-
-            println!("  HAS : {}", hash_index);
-        }
-
+        (hash_index, data_to_write) = hash_folder(&file_path);
+    } else {
+        hash_index = String::from("");
+        data_to_write = String::from("");
     }
 
+    let mut index_file = create_index_file(hash_index, metadata.clone());
 
+    writeln!(index_file, "{}", data_to_write).unwrap();
 }
