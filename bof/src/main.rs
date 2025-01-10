@@ -174,7 +174,7 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
 /// 
 /// * data to write to the index file
 fn get_index_data_for_file(metadata:Metadata) -> String {
-    let mut data_to_write: String = String::from("\n");
+    let mut data_to_write: String = String::from("");
 
     if metadata.is_file() {
         // Creation time
@@ -193,7 +193,6 @@ fn get_index_data_for_file(metadata:Metadata) -> String {
         let size: String = metadata.size().to_string();
         data_to_write.push_str("\nSIZE IN BYTES : ");
         data_to_write.push_str(&size);
-        data_to_write.push_str("\n");
     }
     return data_to_write
 }
@@ -227,6 +226,12 @@ fn create_index_file(hash_index: String, metadata: Metadata) -> File {
     let inode = metadata.ino();
     write!(index_file, "INODE : ").unwrap();
     writeln!(index_file, "{}", inode).unwrap();
+
+    let mut kind = "KIND : FILE";
+    if metadata.is_dir() {
+        kind = "KIND : DIRECTORY"
+    }
+    writeln!(index_file, "{}", kind).unwrap();
 
     return index_file
 }
