@@ -135,15 +135,28 @@ fn index_command() {
 
     println!("inode : {}", inode);
 
-    // Get dates
+    if metadata.is_file() {
+        // Get dates
 
-    let modification_system_time = metadata.modified().unwrap();
+        let modification_system_time = metadata.modified().unwrap();
 
-    let modification_datetime: DateTime<Utc> = modification_system_time.into();
-    println!("Last modification date : {}", modification_datetime.format("%d/%m/%Y %T"));
+        let modification_datetime: DateTime<Utc> = modification_system_time.into();
+        println!("Last modification date : {}", modification_datetime.format("%d/%m/%Y %T"));
 
-    let creation_system_time = metadata.created().unwrap();
+        let creation_system_time = metadata.created().unwrap();
 
-    let creation_datetime: DateTime<Utc> = creation_system_time.into();
-    println!("Last modification date : {}", creation_datetime.format("%d/%m/%Y %T"));
+        let creation_datetime: DateTime<Utc> = creation_system_time.into();
+        println!("Last modification date : {}", creation_datetime.format("%d/%m/%Y %T"));
+
+        let size = metadata.size();
+
+        println!("Document size in bytes: {}", size)
+    } else if metadata.is_dir() {
+        // Add information of the contained documents in the file
+
+        println!("Addin,g indormation of the contained documents")
+
+    }
+
+
 }
