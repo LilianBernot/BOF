@@ -1,9 +1,13 @@
+extern crate chrono;
+
 use std::env;
 use std::path::PathBuf;
 use std::process;
 use std::fs;
 use sha1::{Sha1, Digest};
 use std::os::unix::fs::MetadataExt;
+use chrono::DateTime;
+use chrono::offset::Utc;
 
 
 fn main() {
@@ -130,4 +134,16 @@ fn index_command() {
     let inode = metadata.ino();
 
     println!("inode : {}", inode);
+
+    // Get dates
+
+    let modification_system_time = metadata.modified().unwrap();
+
+    let modification_datetime: DateTime<Utc> = modification_system_time.into();
+    println!("Last modification date : {}", modification_datetime.format("%d/%m/%Y %T"));
+
+    let creation_system_time = metadata.created().unwrap();
+
+    let creation_datetime: DateTime<Utc> = creation_system_time.into();
+    println!("Last modification date : {}", creation_datetime.format("%d/%m/%Y %T"));
 }
