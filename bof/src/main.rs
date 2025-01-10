@@ -2,7 +2,6 @@ extern crate chrono;
 
 use std::env;
 use std::fs::Metadata;
-use std::os::unix::fs::FileExt;
 use std::path::PathBuf;
 use std::process;
 use std::fs;
@@ -11,7 +10,7 @@ use std::os::unix::fs::MetadataExt;
 use chrono::DateTime;
 use chrono::offset::Utc;
 use std::fs::File;
-use std::io::{self, Write};
+use std::io::Write;
 
 
 fn main() {
