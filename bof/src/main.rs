@@ -177,6 +177,25 @@ fn create_index_file(hash_index: String, metadata: Metadata) {
     let inode = metadata.ino();
     write!(index_file, "INODE : ").unwrap();
     writeln!(index_file, "{}", inode).unwrap();
+
+    if metadata.is_file() {
+        // Creation time
+        let creation_system_time = metadata.created().unwrap();
+        let creation_datetime: DateTime<Utc> = creation_system_time.into();
+        write!(index_file, "CREATION TIME : ").unwrap();
+        writeln!(index_file, "{}", creation_datetime.format("%d/%m/%Y %T")).unwrap();
+
+        // Modification time
+        let modification_system_time = metadata.modified().unwrap();
+        let modification_datetime: DateTime<Utc> = modification_system_time.into();
+        write!(index_file, "LAST MODIFICATION TIME : ").unwrap();
+        writeln!(index_file, "{}", modification_datetime.format("%d/%m/%Y %T")).unwrap();
+
+        // Size
+        let size = metadata.size();
+        write!(index_file, "SIZE IN BYTES : ").unwrap();
+        writeln!(index_file, "{}", size).unwrap();
+    }
 }
 
 fn index_command() {
