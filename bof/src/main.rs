@@ -24,7 +24,7 @@ fn main() {
     match args[1].as_str() {
         "init" => init_command(),
         "showdir" => showdir_command("./", 0),
-        "index" => index_command("./src"),
+        "index" => index_command("./"),
         _ => {
             eprintln!("Unknown command: {}", args[1]);
             process::exit(1);
