@@ -25,7 +25,7 @@ fn main() {
     match args[1].as_str() {
         "init" => init_command(),
         "showdir" => showdir_command("./", 0),
-        "index" => index_command(),
+        "index" => index_command("./src"),
         _ => {
             eprintln!("Unknown command: {}", args[1]);
             process::exit(1);
@@ -139,6 +139,8 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
 
         let path_name = unwrapped_path.display().to_string();
 
+
+
         if unwrapped_path.is_file() {
             let file_hash = hash_file(&path_name);
             entries.push((path_name, file_hash, "FILE"));
@@ -226,20 +228,26 @@ fn create_index_file(hash_index: String, metadata: Metadata) -> File {
     return index_file
 }
 
-fn index_command() {
-    println!("Indexing the folder");
+fn index_command(current_path:&str) {
+    println!("Indexing the following element : {}", current_path);
 
-    let file_path = "./src";
-
-    let metadata = fs::metadata(file_path).unwrap();
+    let metadata = fs::metadata(current_path).unwrap();
 
     let hash_index:String;
     let data_to_write:String;
     if metadata.is_file() {
-        hash_index = hash_file(&file_path);
+        hash_index = hash_file(&current_path);
         data_to_write = get_index_file_data(metadata.clone());
     } else if metadata.is_dir() {
-        (hash_index, data_to_write) = hash_folder(&file_path);
+        // Calling the function for each element under this folder
+        let folder_path_dir = fs::read_dir(current_path).unwrap();
+        for path in folder_path_dir {
+            let unwrapped_path = path.unwrap().path();
+            let path_name = unwrapped_path.display().to_string();
+            index_command(&path_name)
+        }
+
+        (hash_index, data_to_write) = hash_folder(&current_path);
     } else {
         hash_index = String::from("");
         data_to_write = String::from("");
