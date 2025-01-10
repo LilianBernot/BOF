@@ -117,6 +117,37 @@ fn hash_file(file_path : &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
+fn hash_folder(folder_path: &str) -> String  {
+
+    let mut entries: Vec<(String, String)> = Vec::new();
+    // Will contain (path_name, hash) for each contained element
+
+    let folder_path_dir = fs::read_dir(folder_path).unwrap();
+
+    for path in folder_path_dir {
+        let unwrapped_path = path.unwrap().path();
+
+        let path_name = unwrapped_path.display().to_string();
+
+        if unwrapped_path.is_file() {
+            let file_hash = hash_file(&path_name);
+            entries.push((path_name, file_hash));
+        } else if unwrapped_path.is_dir() {
+            let folder_hash = hash_folder(&path_name);
+            entries.push((path_name, folder_hash));
+        }
+    }
+
+    // Concatenate name and hash for entries
+    
+    let mut hasher = Sha1::new();
+    for (name, hash) in entries {
+        hasher.update(name);
+        hasher.update(hash);
+    }
+
+    format!("{:x}", hasher.finalize())
+}
 
 fn index_command() {
     println!("Indexing the folder");
