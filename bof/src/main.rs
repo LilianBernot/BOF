@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use std::process;
 use std::fs;
 use sha1::{Sha1, Digest};
+use std::os::unix::fs::MetadataExt;
 
 
 fn main() {
@@ -124,4 +125,9 @@ fn index_command() {
         println!("Initialized empty index directory in {:?}", index_dir);
     }
 
+    let metadata = fs::metadata(file_path).unwrap();
+
+    let inode = metadata.ino();
+
+    println!("inode : {}", inode);
 }
