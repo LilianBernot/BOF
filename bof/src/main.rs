@@ -1,6 +1,7 @@
 extern crate chrono;
 
 use std::env;
+use std::fs::Metadata;
 use std::path::PathBuf;
 use std::process;
 use std::fs;
@@ -8,6 +9,8 @@ use sha1::{Sha1, Digest};
 use std::os::unix::fs::MetadataExt;
 use chrono::DateTime;
 use chrono::offset::Utc;
+use std::fs::File;
+use std::io::{self, Write};
 
 
 fn main() {
@@ -96,7 +99,7 @@ fn showdir_command(current_path:&str, depth: usize) {
 }
 
 /// Creates the index directory that will contain the 
-fn create_index_directory(index_directory: PathBuf) {
+fn create_index_directory(index_directory: &PathBuf) {
     if index_directory.exists() {
         println!("Index directory already exists.");
     } else {
@@ -149,6 +152,29 @@ fn hash_folder(folder_path: &str) -> String  {
     format!("{:x}", hasher.finalize())
 }
 
+
+fn create_index_file(hash_index: String, metadata: Metadata) {
+    // create path for indexing
+
+    let bof_directory = get_bof_dir();
+
+    let (first_two, rest) = hash_index.split_at(2);
+
+    let index_directory = bof_directory.join(first_two);
+
+    create_index_directory(&index_directory);
+
+    let index_file_name = format!("{}.txt", rest);
+
+    let index_file_path = index_directory.join(index_file_name);
+
+    let mut index_file = File::create(index_file_path).unwrap();
+
+    writeln!(index_file, "test").unwrap();
+
+    writeln!(index_file, "Second line").unwrap();
+}
+
 fn index_command() {
     println!("Indexing the folder");
 
@@ -156,21 +182,9 @@ fn index_command() {
 
     let hash_index = hash_file(&file_path);
 
-    let (first_two, rest) = hash_index.split_at(2);
-
-    println!("Hash index : {}", hash_index);
-    println!("first two : {}", first_two);
-    println!("rest : {}", rest);
-
-    // create path for indexing
-
-    let bof_directory = get_bof_dir();
-
-    let index_directory = bof_directory.join(first_two);
-
-    create_index_directory(index_directory);
-
     let metadata = fs::metadata(file_path).unwrap();
+
+    create_index_file(hash_index, metadata.clone());
 
     let inode = metadata.ino();
 
