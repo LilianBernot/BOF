@@ -95,6 +95,16 @@ fn showdir_command(current_path:&str, depth: usize) {
     }
 }
 
+/// Creates the index directory that will contain the 
+fn create_index_directory(index_directory: PathBuf) {
+    if index_directory.exists() {
+        println!("Index directory already exists.");
+    } else {
+        fs::create_dir(&index_directory).expect("Failed to create index directory");
+        println!("Initialized empty index directory in {:?}", index_directory);
+    }
+}
+
 
 fn index_command() {
     println!("Indexing the folder");
@@ -118,16 +128,11 @@ fn index_command() {
 
     // create path for indexing
 
-    let bof_dir = get_bof_dir();
+    let bof_directory = get_bof_dir();
 
-    let index_dir = bof_dir.join(first_two);
+    let index_directory = bof_directory.join(first_two);
 
-    if index_dir.exists() {
-        println!("Index directory already exists.");
-    } else {
-        fs::create_dir(&index_dir).expect("Failed to create index directory");
-        println!("Initialized empty index directory in {:?}", index_dir);
-    }
+    create_index_directory(index_directory);
 
     let metadata = fs::metadata(file_path).unwrap();
 
