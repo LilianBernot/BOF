@@ -120,10 +120,16 @@ fn hash_file(file_path : &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-fn hash_folder(folder_path: &str) -> String  {
+/// Creates the hash of a folder
+///
+/// # Returns 
+/// 
+/// * generated hash
+/// * string to write to the indew file 
+fn hash_folder(folder_path: &str) -> (String, String)  {
 
-    let mut entries: Vec<(String, String)> = Vec::new();
-    // Will contain (path_name, hash) for each contained element
+    let mut entries: Vec<(String, String, &str)> = Vec::new();
+    // Will contain (path_name, hash, kind) for each contained element
 
     let folder_path_dir = fs::read_dir(folder_path).unwrap();
 
@@ -134,22 +140,31 @@ fn hash_folder(folder_path: &str) -> String  {
 
         if unwrapped_path.is_file() {
             let file_hash = hash_file(&path_name);
-            entries.push((path_name, file_hash));
+            entries.push((path_name, file_hash, "FILE"));
         } else if unwrapped_path.is_dir() {
-            let folder_hash = hash_folder(&path_name);
-            entries.push((path_name, folder_hash));
+            let (folder_hash, _data) = hash_folder(&path_name);
+            entries.push((path_name, folder_hash, "DIRECTORY"));
         }
     }
 
     // Concatenate name and hash for entries
     
     let mut hasher = Sha1::new();
-    for (name, hash) in entries {
+    let mut data_to_write = String::new();
+
+    for (name, hash, kind) in entries {
+        data_to_write.push_str("NAME : ");
+        data_to_write.push_str(&name);
         hasher.update(name);
+        data_to_write.push_str("KIND : ");
+        data_to_write.push_str(kind);
+        data_to_write.push_str("HASH : ");
+        data_to_write.push_str(&hash);
+        data_to_write.push_str("\n");
         hasher.update(hash);
     }
 
-    format!("{:x}", hasher.finalize())
+    (format!("{:x}", hasher.finalize()), data_to_write)
 }
 
 
