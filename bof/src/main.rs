@@ -40,8 +40,8 @@ fn get_bof_dir() -> PathBuf{
     bof_dir
 }
 
+/// This command creates a ".bof" directory if not existant
 fn init_command() {
-
     let bof_dir = get_bof_dir();
 
     if bof_dir.exists() {
@@ -52,7 +52,7 @@ fn init_command() {
     }
 }
 
-/// Recursively displays the directory structure starting from a given path.
+/// LEGACY : Recursively displays the directory structure starting from a given path.
 ///
 /// This function traverses the directory tree starting at the specified `current_path`,
 /// printing the directory and file names indented to reflect their depth in the tree.
@@ -90,6 +90,7 @@ fn showdir_command(current_path:&str, depth: usize) {
         if unwrapped_path.is_dir() {
 
             if path_name == "./target/debug" {
+                // We don't want to have too many things to display...
                 println!("{}\t...", display_prefix);
             } else {
                 showdir_command(&path_name, depth+1);
@@ -98,7 +99,7 @@ fn showdir_command(current_path:&str, depth: usize) {
     }
 }
 
-/// Creates the index directory that will contain the 
+/// Creates the index directory that will contain the index files 
 fn create_index_directory(index_directory: &PathBuf) {
     if index_directory.exists() {
         println!("Index directory already exists.");
@@ -120,7 +121,7 @@ fn hash_file(file_path : &str) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-/// Creates the hash of a folder
+/// Computes the hash of a folder
 ///
 /// # Returns 
 /// 
@@ -148,19 +149,21 @@ fn hash_folder(folder_path: &str) -> (String, String)  {
     }
 
     // Concatenate name and hash for entries
-    
     let mut hasher = Sha1::new();
     let mut data_to_write = String::new();
 
     for (name, hash, kind) in entries {
+        // Create data to write 
         data_to_write.push_str("\nNAME : ");
         data_to_write.push_str(&name);
-        hasher.update(name);
         data_to_write.push_str("\nKIND : ");
         data_to_write.push_str(kind);
         data_to_write.push_str("\nHASH : ");
         data_to_write.push_str(&hash);
         data_to_write.push_str("\n");
+
+        // Hasing the name and hash
+        hasher.update(name);
         hasher.update(hash);
     }
 
@@ -196,6 +199,13 @@ fn get_index_data_for_file(metadata:Metadata) -> String {
     return data_to_write
 }
 
+/// Creates the index file for a given element
+/// - Creates the correspoding index directory
+/// - Creates the index file
+/// - Writes essential metadata in the index file
+/// 
+/// # Returns
+/// * created index file
 fn create_index_file(hash_index: String, metadata: Metadata) -> File {
     // Create index directory
     let bof_directory = get_bof_dir();
@@ -235,6 +245,8 @@ fn create_index_file(hash_index: String, metadata: Metadata) -> File {
     return index_file
 }
 
+/// Creates the index files for every element of the current_path
+/// Calls itself recursiveley when meets a folder to dig in
 fn index_command(current_path:&str) {
     println!("Indexing the following element : {}", current_path);
 
@@ -245,6 +257,7 @@ fn index_command(current_path:&str) {
     if metadata.is_file() {
         hash_index = hash_file(&current_path);
         data_to_write = get_index_data_for_file(metadata.clone());
+
     } else if metadata.is_dir() {
         // Calling the function for each element under this folder
         let folder_path_dir = fs::read_dir(current_path).unwrap();
@@ -253,7 +266,7 @@ fn index_command(current_path:&str) {
             let path_name = unwrapped_path.display().to_string();
             index_command(&path_name)
         }
-
+        // Compute hash and data to write
         (hash_index, data_to_write) = hash_folder(&current_path);
     } else {
         hash_index = String::from("");
